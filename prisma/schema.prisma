@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model user {
+  id                String                  @id @default(cuid())
+  name              String
+  email             String                  @unique
+  sectionProgresses user_section_progress[]
+  answers           user_answer[]
+}
+
+model section {
+  id                  String                  @id @default(cuid())
+  title               String
+  number              Int                     @unique // 1 to 4
+  questions           question[]
+  UserSectionProgress user_section_progress[]
+}
+
+model question {
+  id        String        @id @default(cuid())
+  text      String
+  sectionId String
+  section   section       @relation(fields: [sectionId], references: [id])
+  options   option[]
+  answer    Int // index of correct option (0-based)
+  xp        Int           @default(25)
+  answers   user_answer[]
+}
+
+model option {
+  id         String   @id @default(cuid())
+  text       String
+  questionId String
+  question   question @relation(fields: [questionId], references: [id])
+}
+
+model user_answer {
+  id         String   @id @default(cuid())
+  userId     String
+  user       user     @relation(fields: [userId], references: [id])
+  questionId String
+  question   question @relation(fields: [questionId], references: [id])
+  selected   Int // index of selected option
+  isCorrect  Boolean
+}
+
+model user_section_progress {
+  id        String  @id @default(cuid())
+  userId    String
+  user      user    @relation(fields: [userId], references: [id])
+  sectionId String
+  section   section @relation(fields: [sectionId], references: [id])
+  xp        Int     @default(0)
+  unlocked  Boolean @default(false)
+
+  @@unique([userId, sectionId])
+}
