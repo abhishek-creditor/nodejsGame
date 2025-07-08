@@ -13,6 +13,7 @@ model user {
   email             String                  @unique
   sectionProgresses user_section_progress[]
   answers           user_answer[]
+  highscores        user_highscore[]
 }
 
 model section {
@@ -21,6 +22,7 @@ model section {
   number              Int                     @unique // 1 to 4
   questions           question[]
   UserSectionProgress user_section_progress[]
+  highscores        user_highscore[]
 }
 
 model question {
@@ -44,21 +46,36 @@ model option {
 model user_answer {
   id         String   @id @default(cuid())
   userId     String
-  user       user     @relation(fields: [userId], references: [id])
+  user       user     @relation(fields: [userId], references: [id], onDelete: Cascade)
   questionId String
   question   question @relation(fields: [questionId], references: [id])
   selected   Int // index of selected option
   isCorrect  Boolean
+
+  @@unique([userId, questionId])
 }
 
 model user_section_progress {
   id        String  @id @default(cuid())
   userId    String
-  user      user    @relation(fields: [userId], references: [id])
+  user      user    @relation(fields: [userId], references: [id], onDelete: Cascade)
   sectionId String
   section   section @relation(fields: [sectionId], references: [id])
   xp        Int     @default(0)
   unlocked  Boolean @default(false)
+
+  @@unique([userId, sectionId])
+}
+
+model user_highscore {
+  id        String   @id @default(cuid())
+  userId    String
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sectionId String
+  section   section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  score     Int
+  answers   Json     // Array of { questionId, selected, isCorrect }
+  createdAt DateTime @default(now())
 
   @@unique([userId, sectionId])
 }
