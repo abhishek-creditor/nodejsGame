@@ -2,8 +2,15 @@ const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const app = express();
 const prisma = new PrismaClient();
+const cors = require('cors');
+app.use(cors());
 
 app.use(express.json());
+
+// Health check endpoint
+app.get('/', (req, res) => {
+  res.send('Quiz Game API is running');
+});
 
 // Helper: get or create user section progress
 async function getOrCreateSectionProgress(userId, sectionId) {
@@ -95,21 +102,23 @@ app.post('/quiz/answer', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-  // Get all questions with options and section info
-app.get('/questions', async (req, res) => {
-    try {
-      const questions = await prisma.question.findMany({
-        include: {
-          options: true,
-          section: true
-        }
-      });
-      res.json(questions);
-    } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
-  });
 });
+
+// Get all questions with options and section info
+app.get('/questions', async (req, res) => {
+  try {
+    const questions = await prisma.question.findMany({
+      include: {
+        options: true,
+        section: true,
+      },
+    });
+    res.json(questions);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Get all sections with questions and options
 app.get('/sections', async (req, res) => {
   try {
@@ -117,10 +126,10 @@ app.get('/sections', async (req, res) => {
       include: {
         questions: {
           include: {
-            options: true
-          }
-        }
-      }
+            options: true,
+          },
+        },
+      },
     });
     res.json(sections);
   } catch (err) {
