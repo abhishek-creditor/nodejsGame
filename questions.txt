@@ -1,0 +1,135 @@
+Section: Basics of Programming
+
+Q: What is the output of 2 + 2?
+A: 0
+Options:
+4
+3
+5
+6
+
+Q: Which data type is used to store true or false?
+A: 1
+Options:
+Number
+Boolean
+String
+Char
+
+Q: Which symbol is used for comments in JavaScript?
+A: 2
+Options:
+#
+@
+//
+--
+
+Q: Which one is a loop structure in JavaScript?
+A: 3
+Options:
+if
+switch
+function
+for
+
+Section: JavaScript Fundamentals
+
+Q: What is the result of '5' + 1 in JavaScript?
+A: 0
+Options:
+51
+6
+NaN
+Error
+
+Q: Which keyword is used to declare a constant in JavaScript?
+A: 2
+Options:
+var
+let
+const
+final
+
+Q: What is the use of `typeof` operator?
+A: 0
+Options:
+To find data type
+To add numbers
+To compare strings
+To create variables
+
+Q: What will `typeof null` return?
+A: 1
+Options:
+null
+object
+undefined
+false
+
+Section: General Knowledge
+
+Q: What is the capital of India?
+A: 1
+Options:
+Mumbai
+New Delhi
+Kolkata
+Chennai
+
+Q: How many continents are there on Earth?
+A: 2
+Options:
+5
+6
+7
+8
+
+Q: Who is known as the father of the nation in India?
+A: 0
+Options:
+Mahatma Gandhi
+Jawaharlal Nehru
+Subhash Chandra Bose
+Sardar Patel
+
+Q: What is the national animal of India?
+A: 3
+Options:
+Elephant
+Peacock
+Leopard
+Tiger
+
+Section: Computer Science Basics
+
+Q: What does CPU stand for?
+A: 3
+Options:
+Central Process Unit
+Computer Primary Unit
+Control Processing Utility
+Central Processing Unit
+
+Q: Which is a non-volatile memory?
+A: 1
+Options:
+RAM
+ROM
+Cache
+Register
+
+Q: What does RAM stand for?
+A: 2
+Options:
+Read Access Memory
+Random Allocation Machine
+Random Access Memory
+Readable Arithmetic Memory
+
+Q: Which of the following is an input device?
+A: 0
+Options:
+Keyboard
+Monitor
+Printer
+Speaker
