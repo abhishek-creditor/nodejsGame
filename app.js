@@ -197,6 +197,32 @@ app.get('/sections', async (req, res) => {
   }
 });
 
+// Get all users
+app.get('/users', async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        _count: {
+          select: {
+            sectionProgresses: true,
+            highscores: true,
+            answers: true
+          }
+        }
+      },
+      orderBy: {
+        name: 'asc'
+      }
+    });
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Delete a user and all their related data by email or userId
 app.delete('/admin/delete-user', async (req, res) => {
   const { email, userId } = req.body;
