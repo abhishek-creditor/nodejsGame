@@ -4,7 +4,13 @@ const app = express();
 const prisma = new PrismaClient();
 const cors = require('cors');
 app.use(cors({
-  origin: 'https://your-frontend.vercel.app', // or '*' for all origins (less secure)
+  origin: 'quiz-frontend-mauve-omega.vercel.app/:1 Access to fetch at 'https://nodejsgame.onrender.com//leaderboard' from origin 'https://quiz-frontend-mauve-omega.vercel.app' has been blocked by CORS policy: The 'Access-Control-Allow-Origin' header has a value 'https://your-frontend.vercel.app' that is not equal to the supplied origin. Have the server send the header with a valid value.
+
+nodejsgame.onrender.com//leaderboard:1 
+ Failed to load resource: net::ERR_FAILED
+App.js:25 Leaderboard fetch error: TypeError: Failed to fetch
+    at App.js:18:5
+', // or '*' for all origins (less secure)
     credentials: true
 }));
 
