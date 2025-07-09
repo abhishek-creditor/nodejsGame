@@ -3,7 +3,10 @@ const { PrismaClient } = require('@prisma/client');
 const app = express();
 const prisma = new PrismaClient();
 const cors = require('cors');
-app.use(cors());
+app.use(cors({
+  origin: 'https://your-frontend.vercel.app', // or '*' for all origins (less secure)
+    credentials: true
+}));
 
 app.use(express.json());
 
