@@ -29,12 +29,18 @@ async function getOrCreateSectionProgress(userId, sectionId) {
 app.post('/user', async (req, res) => {
     const { name, email } = req.body;
     try {
-      let user = await prisma.user.findUnique({ where: { email } });
-      if (!user) {
-        user = await prisma.user.create({ data: { name, email } });
+      // Check if username is already taken
+      const existingName = await prisma.user.findFirst({ where: { name } });
+      if (existingName) {
+        return res.status(400).json({ error: 'Username already taken. Please choose another.' });
       }
-      // Reset all progress for this user
-      await prisma.user_section_progress.deleteMany({ where: { userId: user.id } });
+      // Check if email is already taken
+      const existingEmail = await prisma.user.findUnique({ where: { email } });
+      if (existingEmail) {
+        return res.status(400).json({ error: 'Email already registered. Please use another.' });
+      }
+      // Create new user
+      const user = await prisma.user.create({ data: { name, email } });
       // Unlock section 1
       const section1 = await prisma.section.findUnique({ where: { number: 1 } });
       if (section1) {

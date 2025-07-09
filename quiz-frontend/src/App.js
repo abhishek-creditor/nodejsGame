@@ -10,6 +10,8 @@ function App() {
   const [message, setMessage] = useState("");
   const [leaderboard, setLeaderboard] = useState([]);
   const [submitResult, setSubmitResult] = useState(null);
+  const [showCongratulations, setShowCongratulations] = useState(false);
+  const [showInsufficientScore, setShowInsufficientScore] = useState(false);
 
   // Fetch leaderboard on load
   useEffect(() => {
@@ -30,12 +32,17 @@ function App() {
     e.preventDefault();
     const name = e.target.name.value;
     const email = e.target.email.value;
+    setMessage("");
     const res = await fetch(`${API_URL}/user`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, email }),
     });
     const data = await res.json();
+    if (data.error) {
+      setMessage(data.error); // Show error to user
+      return;
+    }
     setUser(data);
     setStep("quiz");
     fetchSection(data.id);
@@ -52,7 +59,20 @@ function App() {
       setSelected({});
     } else {
       setSection(null);
-      setMessage("No unlocked section found or you have completed all sections!");
+      // Check if all sections are completed
+      if (res.status === 404) {
+        setShowCongratulations(true);
+        // Redirect to login page after 5 seconds
+        setTimeout(() => {
+          setStep("register");
+          setUser(null);
+          setShowCongratulations(false);
+          // Refetch leaderboard to show updated scores
+          fetch(`${API_URL}/leaderboard`).then(res => res.json()).then(setLeaderboard);
+        }, 5000);
+      } else {
+        setMessage("No unlocked section found or you have completed all sections!");
+      }
     }
   };
 
@@ -79,6 +99,20 @@ function App() {
     });
     const data = await res.json();
     setSubmitResult(data);
+    
+    // Check if score is insufficient (less than 100 XP)
+    if (data.score < 100) {
+      setShowInsufficientScore(true);
+      // Redirect to login page after 3 seconds
+      setTimeout(() => {
+        setStep("register");
+        setUser(null);
+        setShowInsufficientScore(false);
+        // Refetch leaderboard to show updated scores
+        fetch(`${API_URL}/leaderboard`).then(res => res.json()).then(setLeaderboard);
+      }, 3000);
+    }
+    
     // Optionally, refetch leaderboard
     fetch(`${API_URL}/leaderboard`).then(res => res.json()).then(setLeaderboard);
   };
@@ -94,6 +128,7 @@ function App() {
       <h1>Quiz Game</h1>
       {step === "register" && (
         <>
+          {message && <div style={{ color: "red", marginBottom: 8 }}>{message}</div>}
           <form onSubmit={handleRegister}>
             <h2>Register / Login</h2>
             <input name="name" placeholder="Name" required style={{ width: "100%", marginBottom: 8 }} />
@@ -118,7 +153,20 @@ function App() {
       {step === "quiz" && user && (
         <div>
           <h2>Welcome, {user.name}!</h2>
-          {section ? (
+          {showCongratulations ? (
+            <div style={{ textAlign: "center", padding: "40px" }}>
+              <h1>🎉 Congratulations! 🎉</h1>
+              <h2>You have completed all sections!</h2>
+              <p>You are a quiz master! Redirecting to login page in a few seconds...</p>
+            </div>
+          ) : showInsufficientScore ? (
+            <div style={{ textAlign: "center", padding: "40px" }}>
+              <h1>😔 Oops! Not Enough Score</h1>
+              <h2>You scored {submitResult?.score || 0} XP</h2>
+              <p>You need at least 100 XP to proceed to the next section.</p>
+              <p>Redirecting to login page in a few seconds...</p>
+            </div>
+          ) : section ? (
             <div>
               <h3>{section.title}</h3>
               {/* Section Progress Bar */}
@@ -207,12 +255,14 @@ function App() {
                 <div style={{ marginTop: 24 }}>
                   <h3>{submitResult.isNewHighscore ? "🎉 New Highscore!" : "Section Complete"}</h3>
                   <div>Score: {submitResult.score} XP</div>
-                  <button
-                    style={{ marginTop: 16, width: "100%", padding: 12, fontSize: 18, background: "#4caf50", color: "#fff", border: "none", borderRadius: 8 }}
-                    onClick={handleNextSection}
-                  >
-                    Next Section
-                  </button>
+                  {submitResult.score >= 100 && (
+                    <button
+                      style={{ marginTop: 16, width: "100%", padding: 12, fontSize: 18, background: "#4caf50", color: "#fff", border: "none", borderRadius: 8 }}
+                      onClick={handleNextSection}
+                    >
+                      Next Section
+                    </button>
+                  )}
                 </div>
               )}
             </div>
