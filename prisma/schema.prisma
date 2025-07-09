@@ -22,7 +22,7 @@ model section {
   number              Int                     @unique // 1 to 4
   questions           question[]
   UserSectionProgress user_section_progress[]
-  highscores        user_highscore[]
+  highscores          user_highscore[]
 }
 
 model question {
@@ -74,7 +74,7 @@ model user_highscore {
   sectionId String
   section   section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   score     Int
-  answers   Json     // Array of { questionId, selected, isCorrect }
+  answers   Json // Array of { questionId, selected, isCorrect }
   createdAt DateTime @default(now())
 
   @@unique([userId, sectionId])
