@@ -4,7 +4,8 @@ const app = express();
 const prisma = new PrismaClient();
 const cors = require('cors');
 app.use(cors({
-  origin: 'https://quiz-frontend-mauve-omega.vercel.app', // or '*' for all origins (less secure)
+  origin: ['https://quiz-frontend-mauve-omega.vercel.app',
+    'http://localhost:8080'],  
     credentials: true
 }));
 
@@ -141,7 +142,10 @@ app.post('/quiz/answer', async (req, res) => {
     await prisma.user_answer.create({
       data: { userId, questionId, selected, isCorrect },
     });
-    // Update XP if correct
+    let sectionCompleted = false;
+    let nextSectionUnlocked = false;
+    let userXp = 0;
+    let nextSectionNumber = null;
     if (isCorrect) {
       const sectionId = question.sectionId;
       await prisma.user_section_progress.update({
@@ -152,16 +156,33 @@ app.post('/quiz/answer', async (req, res) => {
       const updatedProgress = await prisma.user_section_progress.findUnique({
         where: { userId_sectionId: { userId, sectionId } }
       });
+      userXp = updatedProgress.xp;
       // Unlock next section if XP reaches 100
       if (updatedProgress.xp >= 100) {
+        sectionCompleted = true;
         const section = await prisma.section.findUnique({ where: { id: sectionId } });
         const nextSection = await prisma.section.findUnique({ where: { number: section.number + 1 } });
         if (nextSection) {
           await getOrCreateSectionProgress(userId, nextSection.id);
+          nextSectionUnlocked = true;
+          nextSectionNumber = nextSection.number;
         }
       }
+    } else {
+      // Fetch current XP for response
+      const sectionId = question.sectionId;
+      const progress = await prisma.user_section_progress.findUnique({
+        where: { userId_sectionId: { userId, sectionId } }
+      });
+      userXp = progress ? progress.xp : 0;
     }
-    res.json({ correct: isCorrect });
+    res.json({
+      correct: isCorrect,
+      userXp,
+      sectionCompleted,
+      nextSectionUnlocked,
+      nextSectionNumber
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -276,61 +297,61 @@ app.get('/leaderboard', async (req, res) => {
 });
 
 // Submit all answers for a section and upsert highscore
-app.post('/quiz/submit-section', async (req, res) => {
-  const { userId, sectionId, answers } = req.body;
-  try {
-    // Get all questions for the section
-    const questions = await prisma.question.findMany({
-      where: { sectionId },
-      orderBy: { id: 'asc' }
-    });
-    // Calculate score
-    let score = 0;
-    const answerResults = answers.map(ans => {
-      const q = questions.find(q => q.id === ans.questionId);
-      const isCorrect = q && Number(q.answer) === Number(ans.selected);
-      if (isCorrect) score += q.xp;
-      return {
-        questionId: ans.questionId,
-        selected: ans.selected,
-        isCorrect
-      };
-    });
-    // Get previous highscore
-    const prev = await prisma.user_highscore.findUnique({
-      where: { userId_sectionId: { userId, sectionId } }
-    });
-    let isNewHighscore = false;
-    if (!prev || score > prev.score) {
-      // Upsert new highscore
-      await prisma.user_highscore.upsert({
-        where: { userId_sectionId: { userId, sectionId } },
-        update: { score, answers: answerResults },
-        create: { userId, sectionId, score, answers: answerResults }
-      });
-      isNewHighscore = true;
-    }
-    // Mark section as completed (xp=100, unlocked=true)
-    await prisma.user_section_progress.upsert({
-      where: { userId_sectionId: { userId, sectionId } },
-      update: { xp: 100, unlocked: true },
-      create: { userId, sectionId, xp: 100, unlocked: true }
-    });
-    // Unlock next section if it exists
-    const section = await prisma.section.findUnique({ where: { id: sectionId } });
-    const nextSection = await prisma.section.findUnique({ where: { number: section.number + 1 } });
-    if (nextSection) {
-      await prisma.user_section_progress.upsert({
-        where: { userId_sectionId: { userId, sectionId: nextSection.id } },
-        update: { unlocked: true },
-        create: { userId, sectionId: nextSection.id, unlocked: true }
-      });
-    }
-    res.json({ isNewHighscore, score, answerResults });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+// app.post('/quiz/submit-section', async (req, res) => {
+//   const { userId, sectionId, answers } = req.body;
+//   try {
+//     // Get all questions for the section
+//     const questions = await prisma.question.findMany({
+//       where: { sectionId },
+//       orderBy: { id: 'asc' }
+//     });
+//     // Calculate score
+//     let score = 0;
+//     const answerResults = answers.map(ans => {
+//       const q = questions.find(q => q.id === ans.questionId);
+//       const isCorrect = q && Number(q.answer) === Number(ans.selected);
+//       if (isCorrect) score += q.xp;
+//       return {
+//         questionId: ans.questionId,
+//         selected: ans.selected,
+//         isCorrect
+//       };
+//     });
+//     // Get previous highscore
+//     const prev = await prisma.user_highscore.findUnique({
+//       where: { userId_sectionId: { userId, sectionId } }
+//     });
+//     let isNewHighscore = false;
+//     if (!prev || score > prev.score) {
+//       // Upsert new highscore
+//       await prisma.user_highscore.upsert({
+//         where: { userId_sectionId: { userId, sectionId } },
+//         update: { score, answers: answerResults },
+//         create: { userId, sectionId, score, answers: answerResults }
+//       });
+//       isNewHighscore = true;
+//     }
+//     // Mark section as completed (xp=100, unlocked=true)
+//     await prisma.user_section_progress.upsert({
+//       where: { userId_sectionId: { userId, sectionId } },
+//       update: { xp: 100, unlocked: true },
+//       create: { userId, sectionId, xp: 100, unlocked: true }
+//     });
+//     // Unlock next section if it exists
+//     const section = await prisma.section.findUnique({ where: { id: sectionId } });
+//     const nextSection = await prisma.section.findUnique({ where: { number: section.number + 1 } });
+//     if (nextSection) {
+//       await prisma.user_section_progress.upsert({
+//         where: { userId_sectionId: { userId, sectionId: nextSection.id } },
+//         update: { unlocked: true },
+//         create: { userId, sectionId: nextSection.id, unlocked: true }
+//       });
+//     }
+//     res.json({ isNewHighscore, score, answerResults });
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
