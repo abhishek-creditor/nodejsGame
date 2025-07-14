@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useGameState } from "./useGameState";
-import { questions } from "../data/questions";
 
-export const useStadiumGameLogic = () => {
+export const useStadiumGameLogic = (userId) => {
   const {
     gameState,
     resetGameState,
@@ -13,6 +12,8 @@ export const useStadiumGameLogic = () => {
     startNextQuarter
   } = useGameState();
 
+  const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [lastAnswer, setLastAnswer] = useState(null);
   const [cameraOffset, setCameraOffset] = useState(0);
@@ -21,6 +22,25 @@ export const useStadiumGameLogic = () => {
   const [showOpponentTaunt, setShowOpponentTaunt] = useState(false);
   const [currentTauntOpponent, setCurrentTauntOpponent] = useState(null);
   const [showAttemptsLeft, setShowAttemptsLeft] = useState(false);
+
+  useEffect(() => {
+    if (!userId) return;
+    setLoading(true);
+    fetch(`http://localhost:3000/quiz/current?userId=${userId}`)
+      .then(res => res.json())
+      .then(data => {
+        // Map options to text array for each question, and set correctAnswer/question fields
+        const questions = (data.questions || []).map(q => ({
+          ...q,
+          options: q.options.map(o => o.text),
+          correctAnswer: q.answer,
+          question: q.text,
+        }));
+        setQuestions(questions);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [userId]);
 
   const checkGameComplete = () => {
     return gameState.currentQuarter >= 4 && gameState.currentQuestionInQuarter > 4;
@@ -48,13 +68,12 @@ export const useStadiumGameLogic = () => {
 
   const handleAnswer = (selectedIndex, isCorrect, setPhase) => {
     if (isCorrect) {
-      const newPosition = advanceAvatar();
+      advanceAvatar();
       setCameraOffset(prev => prev - 10);
       console.log("🎵 XP sparkle + crowd cheer");
 
       setLastAnswer({ isCorrect, yards: 1 });
       setPhase('result');
-
       if (gameState.totalQuestionsAnswered + 1 >= 16) {
         console.log("🏆 GAME COMPLETE! Player finished all 16 questions!");
 
@@ -77,7 +96,6 @@ export const useStadiumGameLogic = () => {
       console.log(`Wrong answer! Attempts left: ${gameState.attemptsLeft - 1}`);
 
       setLastAnswer({ isCorrect, yards: 0 });
-
       if (gameState.attemptsLeft > 1) {
         if (gameState.attemptsLeft === 3 || gameState.attemptsLeft === 2) {
           console.log("🗣️ Showing Clerk Carla taunt - attempts left:", gameState.attemptsLeft - 1);
@@ -95,15 +113,12 @@ export const useStadiumGameLogic = () => {
 
         setShowSubtleThreat(true);
         setPhase('ready');
-
         setTimeout(() => {
           setShowAttemptsLeft(true);
         }, 3500);
-
         setTimeout(() => {
           setShowAttemptsLeft(false);
         }, 6000);
-
         setTimeout(() => {
           setShowSubtleThreat(false);
         }, 7000);
@@ -149,7 +164,6 @@ export const useStadiumGameLogic = () => {
   const handleNextPlay = (setPhase) => {
     setCurrentQuestionIndex(prev => (prev + 1) % questions.length);
     setLastAnswer(null);
-
     if (checkQuarterComplete()) {
       completeQuarter();
       setPhase('quarterComplete');
@@ -169,6 +183,7 @@ export const useStadiumGameLogic = () => {
   };
 
   return {
+    loading,
     gameState,
     currentQuestionIndex,
     lastAnswer,

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
-export const QuestionCard = ({ question, onAnswer, isVisible }) => {
+export const QuestionCard = ({ question, questionNumber, onAnswer, isVisible }) => {
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [timeLeft, setTimeLeft] = useState(15);
 
@@ -78,7 +78,7 @@ export const QuestionCard = ({ question, onAnswer, isVisible }) => {
           {/* Question */}
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-cyan-300 mb-4">
-              QUESTION {question.id}
+              QUESTION {questionNumber}
             </h2>
             <p className="text-xl text-white">{question.question}</p>
           </div>

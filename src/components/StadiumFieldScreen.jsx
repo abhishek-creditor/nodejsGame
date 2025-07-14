@@ -2,8 +2,10 @@ import { GamePhaseManager } from "./GamePhaseManager";
 import { StadiumGameRenderer } from "./StadiumGameRenderer.jsx";
 import { useStadiumGameLogic } from "../hooks/useStadiumGameLogic";
 
-export const StadiumFieldScreen = ({ isVisible, onSnapBall }) => {
+// Accept userId as a prop
+export const StadiumFieldScreen = ({ isVisible, onSnapBall, userId }) => {
   const {
+    loading,
     gameState,
     currentQuestion,
     lastAnswer,
@@ -14,9 +16,10 @@ export const StadiumFieldScreen = ({ isVisible, onSnapBall }) => {
     showAttemptsLeft,
     isTouchdownCelebration,
     handlers
-  } = useStadiumGameLogic();
+  } = useStadiumGameLogic(userId);
 
   if (!isVisible) return null;
+  if (loading) return <div className="flex items-center justify-center h-full text-white text-2xl">Loading questions...</div>;
 
   return (
     <GamePhaseManager>

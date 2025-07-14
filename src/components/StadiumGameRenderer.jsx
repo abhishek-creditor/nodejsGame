@@ -130,6 +130,7 @@ export const StadiumGameRenderer = ({
 
       <QuestionCard
         question={currentQuestion}
+        questionNumber={currentQuestionIndex + 1}
         onAnswer={handlers.handleAnswer}
         isVisible={gamePhase === 'question'}
       />

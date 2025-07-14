@@ -106,8 +106,18 @@ app.get('/quiz/current', async (req, res) => {
     const fallback = progresses.find(p => p.unlocked);
     if (!progress && !fallback) return res.status(404).json({ error: 'No unlocked section found' });
     const sectionToShow = progress || fallback;
+    // Map questions to have options as array of strings and correct frontend fields, and add number
+    const questionsWithStringOptions = sectionToShow.section.questions.map((q, idx) => ({
+      id: q.id,
+      question: q.text,
+      options: q.options.map(o => o.text),
+      correctAnswer: q.answer,
+      xp: q.xp,
+      number: idx + 1 // 1-based question number
+    }));
     res.json({
       ...sectionToShow.section,
+      questions: questionsWithStringOptions,
       userXp: sectionToShow.xp,
       sectionProgress: progresses.map(p => ({
         sectionNumber: p.section.number,

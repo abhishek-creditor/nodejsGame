@@ -84,6 +84,7 @@ const Index = () => {
       <StadiumFieldScreen
         isVisible={showStadiumField}
         onSnapBall={handleSnapBall}
+        userId={userData.id || userData._id || userData.email}
       />
     </div>
   );
