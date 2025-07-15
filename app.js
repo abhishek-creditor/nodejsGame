@@ -213,6 +213,25 @@ app.get('/questions', async (req, res) => {
   }
 });
 
+// Simple questions API: only question, correct answer, and options
+app.get('/questions/simple', async (req, res) => {
+  try {
+    const questions = await prisma.question.findMany({
+      include: { options: true },
+      orderBy: { id: 'asc' }
+    });
+    const simpleQuestions = questions.map(q => ({
+      id: q.id,
+      question: q.text,
+      correctAnswer: q.answer,
+      options: q.options.map(o => o.text)
+    }));
+    res.json(simpleQuestions);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Get all sections with questions and options
 app.get('/sections', async (req, res) => {
   try {

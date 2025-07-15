@@ -1,31 +1,42 @@
 import { Trophy, Users, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export const ChallengeSection = () => {
   const [visiblePlayers, setVisiblePlayers] = useState(5);
-  
-  // Mock leaderboard data with more players
-  const allLeaderboardData = [
-    { rank: 1, name: "Alex Rodriguez", score: 400 },
-    { rank: 2, name: "Sarah Chen", score: 375 },
-    { rank: 3, name: "Marcus Johnson", score: 350 },
-    { rank: 4, name: "Emma Davis", score: 325 },
-    { rank: 5, name: "Jordan Kim", score: 300 },
-    { rank: 6, name: "Taylor Swift", score: 275 },
-    { rank: 7, name: "Michael Brown", score: 250 },
-    { rank: 8, name: "Lisa Wang", score: 225 },
-    { rank: 9, name: "David Lee", score: 200 },
-    { rank: 10, name: "Rachel Green", score: 175 },
-    { rank: 11, name: "John Smith", score: 150 },
-    { rank: 12, name: "Maria Garcia", score: 125 },
-    { rank: 13, name: "James Wilson", score: 100 },
-    { rank: 14, name: "Anna Miller", score: 75 },
-    { rank: 15, name: "Chris Evans", score: 50 },
-  ];
+  const [leaderboardData, setLeaderboardData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const displayedPlayers = allLeaderboardData.slice(0, visiblePlayers);
-  const hasMorePlayers = visiblePlayers < allLeaderboardData.length;
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await fetch("http://localhost:3000/leaderboard");
+        if (!response.ok) throw new Error("Failed to fetch leaderboard");
+        const data = await response.json();
+        // Map backend fields to frontend expected fields
+        const mappedData = data.map((player, idx) => ({
+          name: player.username,
+          score: player.xp,
+          rank: idx + 1, // Optionally add rank if you want
+        }));
+        setLeaderboardData(mappedData);
+        
+        
+      } catch (err) {
+        setError(err.message || "Unknown error");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLeaderboard();
+  }, []);
+
+  const displayedPlayers = leaderboardData.slice(0, visiblePlayers);
+  const hasMorePlayers = visiblePlayers < leaderboardData.length;
 
   const getRankIcon = (rank) => {
     if (rank === 1) return <Trophy className="w-5 h-5 text-yellow-500" />;
@@ -35,7 +46,7 @@ export const ChallengeSection = () => {
   };
 
   const loadMorePlayers = () => {
-    setVisiblePlayers(prev => Math.min(prev + 5, allLeaderboardData.length));
+    setVisiblePlayers(prev => Math.min(prev + 5, leaderboardData.length));
   };
 
   return (
@@ -124,21 +135,27 @@ export const ChallengeSection = () => {
               </div>
             </div>
             
-            <div className="divide-y divide-gray-700">
-              {displayedPlayers.map((player) => (
-                <div 
-                  key={player.rank} 
-                  className="grid grid-cols-3 gap-4 p-4 hover:bg-gray-700/30 transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    {getRankIcon(player.rank)}
-                    <span className="text-white font-bold">#{player.rank}</span>
+            {loading ? (
+              <div className="text-center text-gray-400 py-8">Loading leaderboard...</div>
+            ) : error ? (
+              <div className="text-center text-red-400 py-8">{error}</div>
+            ) : (
+              <div className="divide-y divide-gray-700">
+                {displayedPlayers.map((player, idx) => (
+                  <div 
+                    key={player.rank || idx} 
+                    className="grid grid-cols-3 gap-4 p-4 hover:bg-gray-700/30 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      {getRankIcon(player.rank || idx + 1)}
+                      <span className="text-white font-bold">#{player.rank || idx + 1}</span>
+                    </div>
+                    <div className="text-white font-medium">{player.name}</div>
+                    <div className="text-cyan-400 font-bold">{player.score?.toLocaleString?.() ?? player.score}</div>
                   </div>
-                  <div className="text-white font-medium">{player.name}</div>
-                  <div className="text-cyan-400 font-bold">{player.score.toLocaleString()}</div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
             
             {hasMorePlayers && (
               <div className="p-4 bg-gray-800/30 text-center">

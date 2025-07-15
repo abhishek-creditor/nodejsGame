@@ -33,7 +33,12 @@ export const StadiumGameRenderer = ({
   currentTauntOpponent,
   showAttemptsLeft,
   isTouchdownCelebration,
-  handlers
+  handlers,
+  loading,
+  questions,
+  currentQuestionIndex,
+  handleAnswer,
+  phase
 }) => {
   const { timeLeft } = useGameTimer(gamePhase === 'ready');
   const currentQuarter = quarters[gameState.currentQuarter - 1];
@@ -128,12 +133,16 @@ export const StadiumGameRenderer = ({
         playerPosition={gameState.avatarPosition}
       />
 
-      <QuestionCard
-        question={currentQuestion}
-        questionNumber={currentQuestionIndex + 1}
-        onAnswer={handlers.handleAnswer}
-        isVisible={gamePhase === 'question'}
-      />
+      {/* Loading state and guarded QuestionCard render */}
+      {loading && <div className="text-center text-white text-xl py-8">Loading questions...</div>}
+      {questions && questions.length > 0 && questions[currentQuestionIndex] && (
+        <QuestionCard
+          question={questions[currentQuestionIndex]}
+          questionNumber={currentQuestionIndex + 1}
+          onAnswer={handleAnswer}
+          isVisible={phase === 'question'}
+        />
+      )}
 
       {/* Touchdown Celebration Component */}
       <TouchdownCelebration 

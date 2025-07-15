@@ -24,23 +24,15 @@ export const useStadiumGameLogic = (userId) => {
   const [showAttemptsLeft, setShowAttemptsLeft] = useState(false);
 
   useEffect(() => {
-    if (!userId) return;
     setLoading(true);
-    fetch(`http://localhost:3000/quiz/current?userId=${userId}`)
+    fetch("http://localhost:3000/questions/simple")
       .then(res => res.json())
       .then(data => {
-        // Map options to text array for each question, and set correctAnswer/question fields
-        const questions = (data.questions || []).map(q => ({
-          ...q,
-          options: q.options.map(o => o.text),
-          correctAnswer: q.answer,
-          question: q.text,
-        }));
-        setQuestions(questions);
+        setQuestions(data);
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [userId]);
+  }, []);
 
   const checkGameComplete = () => {
     return gameState.currentQuarter >= 4 && gameState.currentQuestionInQuarter > 4;
@@ -162,7 +154,14 @@ export const useStadiumGameLogic = (userId) => {
   };
 
   const handleNextPlay = (setPhase) => {
-    setCurrentQuestionIndex(prev => (prev + 1) % questions.length);
+    // setCurrentQuestionIndex(prev => (prev + 1) % questions.length);
+    setCurrentQuestionIndex(prev => {
+      if (prev + 1 < questions.length) {
+        return prev + 1;
+      } else {
+        return prev; // Stay at the last question, or trigger game end logic
+      }
+    });
     setLastAnswer(null);
     if (checkQuarterComplete()) {
       completeQuarter();
